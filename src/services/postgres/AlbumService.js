@@ -30,7 +30,11 @@ class NotesService {
 
   async getAlbum() {
     const result = await this._pool.query('SELECT * FROM albums');
-    return result.rows.map(mapDBToModel);
+    return result.rows.map(((item) => ({
+      id: item.id,
+      name: item.name,
+      year: item.year,
+    })));
   }
 
   async getAlbumById(id) {
@@ -39,12 +43,23 @@ class NotesService {
       values: [id],
     };
     const result = await this._pool.query(query);
+    const querySongs = await this._pool.query({
+      text: 'SELECT * FROM songs WHERE album_id = $1',
+      values: [id],
+    });
+    const songs = querySongs.rows.map(mapDBToModel);
 
     if (!result.rows.length) {
       throw new NotFoundError('Album tidak ditemukan');
     }
-
-    return result.rows.map(mapDBToModel)[0];
+    return {
+      ...result.rows.map(((item) => ({
+        id: item.id,
+        name: item.name,
+        year: item.year,
+      })))[0],
+      songs,
+    };
   }
 
   async editAlbumById(id, { name, year }) {
