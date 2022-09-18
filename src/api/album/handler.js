@@ -5,7 +5,7 @@ class AlbumHandler {
     this._service = service;
     this._validator = validator;
 
-    this.posAlbumHandler = this.postAlbumHandler.bind(this);
+    this.postAlbumHandler = this.postAlbumHandler.bind(this);
     this.getAlbumHandler = this.getAlbumHandler.bind(this);
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this);
     this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this);
@@ -17,13 +17,13 @@ class AlbumHandler {
       this._validator.validateAlbumPayload(request.payload);
       const { name, year } = request.payload;
 
-      const AlbumId = await this._service.addAlbum({ name, year });
+      const albumId = await this._service.addAlbum({ name, year });
 
       const response = h.response({
         status: 'success',
-        message: 'Catatan berhasil ditambahkan',
+        message: 'Album berhasil ditambahkan',
         data: {
-          AlbumId,
+          albumId,
         },
       });
       response.code(201);
@@ -50,11 +50,11 @@ class AlbumHandler {
   }
 
   async getAlbumHandler() {
-    const Album = await this._service.getAlbum();
+    const album = await this._service.getAlbum();
     return {
       status: 'success',
       data: {
-        Album,
+        album,
       },
     };
   }
@@ -62,11 +62,11 @@ class AlbumHandler {
   async getAlbumByIdHandler(request, h) {
     try {
       const { id } = request.params;
-      const Album = await this._service.getAlbumById(id);
+      const album = await this._service.getAlbumById(id);
       return {
         status: 'success',
         data: {
-          Album,
+          album,
         },
       };
     } catch (error) {
@@ -100,7 +100,7 @@ class AlbumHandler {
 
       return {
         status: 'success',
-        message: 'Catatan berhasil diperbarui',
+        message: 'Album berhasil diperbarui',
       };
     } catch (error) {
       if (error instanceof ClientError) {
@@ -130,7 +130,7 @@ class AlbumHandler {
 
       return {
         status: 'success',
-        message: 'Catatan berhasil dihapus',
+        message: 'Album berhasil dihapus',
       };
     } catch (error) {
       if (error instanceof ClientError) {
