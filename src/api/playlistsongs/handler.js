@@ -1,11 +1,15 @@
 const ClientError = require('../../exception/ClientError');
 
 class PlaylistsongsHandler {
-  constructor(playlistsongsService, playlistsService, songsService, validator) {
+  constructor(playlistsongsService, playlistsService,
+    songsService,
+    validator,
+    playlistSongsActivitesService) {
     this._playlistsongsService = playlistsongsService;
     this._playlistsService = playlistsService;
     this._songsService = songsService;
     this._validator = validator;
+    this._playlistSongsActivitesService = playlistSongsActivitesService;
 
     this.postPlaylistsongHandler = this.postPlaylistsongHandler.bind(this);
     this.getPlaylistsongByIdHandler = this.getPlaylistsongByIdHandler.bind(this);
@@ -19,10 +23,16 @@ class PlaylistsongsHandler {
       const { songId } = request.payload;
       const { id: playlistId } = request.params;
 
-      await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      await this._playlistsService.verifyCollaboration(playlistId, credentialId);
       await this._songsService.getSongsById(songId);
       const playlistsongId = await this._playlistsongsService.addPlaylistsong(songId, playlistId);
 
+      await this._playlistSongsActivitesService.addPlaylistSongActivites({
+        songId,
+        playlistId,
+        userId: credentialId,
+        action: 'add',
+      });
       const response = h.response({
         status: 'success',
         message: 'Lagu berhasil ditambahkan',
@@ -58,7 +68,7 @@ class PlaylistsongsHandler {
       const { id: credentialId } = request.auth.credentials;
       const { id: playlistId } = request.params;
 
-      await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      await this._playlistsService.verifyCollaboration(playlistId, credentialId);
       const playlistsongs = await this._playlistsongsService.getPlaylistsongById(playlistId);
 
       return {
@@ -95,9 +105,14 @@ class PlaylistsongsHandler {
       const { songId } = request.payload;
       const { id: playlistId } = request.params;
 
-      await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      await this._playlistsService.verifyCollaboration(playlistId, credentialId);
       await this._playlistsongsService.deletePlaylistsong(songId, playlistId);
-
+      await this._playlistSongsActivitesService.addPlaylistSongActivites({
+        songId,
+        playlistId,
+        userId: credentialId,
+        action: 'delete',
+      });
       return {
         status: 'success',
         message: 'Lagu berhasil dihapus',
