@@ -1,5 +1,7 @@
 const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
+const fs = require('fs');
+const path = require('path');
 const InvariantError = require('../../exception/Invarianterror');
 const { mapDBToModel } = require('../../utils');
 const NotFoundError = require('../../exception/NotFoundError');
@@ -52,11 +54,14 @@ class NotesService {
     if (!result.rows.length) {
       throw new NotFoundError('Album tidak ditemukan');
     }
+    const files = fs.readdirSync(path.join(__dirname, '../../api/uploads/file/pictures'));
+    const fileName = files.find((item) => item.includes(id));
     return {
       ...result.rows.map(((item) => ({
         id: item.id,
         name: item.name,
         year: item.year,
+        coverUrl: fileName ? `http://${process.env.HOST}:${process.env.PORT}/upload/pictures/${fileName}` : null,
       })))[0],
       songs,
     };

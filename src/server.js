@@ -1,6 +1,8 @@
 require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
+const Inert = require('@hapi/inert');
+const path = require('path');
 
 // api
 const album = require('./api/album');
@@ -11,6 +13,9 @@ const playlists = require('./api/playlists');
 const playlistsongs = require('./api/playlistsongs');
 const collaborations = require('./api/collaborations');
 const playlistsongsactivities = require('./api/playlistsongsactivities');
+const uploads = require('./api/uploads');
+const _exports = require('./api/exports');
+const useralbumlikes = require('./api/useralbumlikes');
 
 // service
 const AlbumService = require('./services/postgres/AlbumService');
@@ -21,6 +26,10 @@ const PlaylistsService = require('./services/postgres/PlaylistsService');
 const PlaylistsongsService = require('./services/postgres/PlaylistsongsService');
 const CollaborationsService = require('./services/postgres/CollaborationsService');
 const PlaylistSongsActivitesService = require('./services/postgres/PlaylistSongsActivitesService');
+const StorageService = require('./services/storage/StorageService');
+const ProducerService = require('./services/rabbitmq/ProducerService');
+const UserAlbumLikesService = require('./services/postgres/UserAlbumLikes');
+const CacheService = require('./services/redis/CacheService');
 
 // validator
 const AlbumValidator = require('./validator/album');
@@ -30,6 +39,8 @@ const AuthenticationsValidator = require('./validator/authentications');
 const PlaylistsValidator = require('./validator/playlists');
 const PlaylistsongsValidator = require('./validator/playlistsongs');
 const CollaborationsValidator = require('./validator/collaborations');
+const UploadsValidator = require('./validator/uploads');
+const ExportsValidator = require('./validator/exports');
 const TokenManager = require('./tokenize/tokenManager');
 
 const init = async () => {
@@ -41,7 +52,9 @@ const init = async () => {
   const playlistsongsService = new PlaylistsongsService();
   const collaborationsService = new CollaborationsService();
   const playlistSongsActivitesService = new PlaylistSongsActivitesService();
-
+  const storageService = new StorageService(path.resolve(__dirname, 'api/uploads/file/pictures'));
+  const cacheService = new CacheService();
+  const userAlbumLikesService = new UserAlbumLikesService(cacheService);
   const server = Hapi.server({
     port: process.env.PORT,
     host: process.env.HOST,
@@ -55,6 +68,9 @@ const init = async () => {
   await server.register([
     {
       plugin: Jwt,
+    },
+    {
+      plugin: Inert,
     },
   ]);
   // mendefinisikan strategy autentikasi jwt
@@ -133,6 +149,27 @@ const init = async () => {
       options: {
         playlistSongsActivitesService,
         playlistsService,
+      },
+    },
+    {
+      plugin: uploads,
+      options: {
+        service: storageService,
+        validator: UploadsValidator,
+      },
+    },
+    {
+      plugin: _exports,
+      options: {
+        service: ProducerService,
+        validator: ExportsValidator,
+        playlistsService,
+        playlistsongsService,
+      },
+    }, {
+      plugin: useralbumlikes,
+      options: {
+        userAlbumLikesService,
       },
     },
   ]);
