@@ -17,9 +17,9 @@ class ExportsHandler {
       const { id: userId } = request.auth.credentials;
 
       await this._playlistsService.verifyCollaboration(playlistId, userId);
-      const playlistsongs = await this._playlistsongsService.getPlaylistsongById(playlistId);
-      delete playlistsongs.playlist.username;
-      const message = { targetEmail: request.payload.targetEmail, playlistsongs };
+      // const playlistsongs = await this._playlistsongsService.getPlaylistsongById(playlistId);
+      // delete playlistsongs.playlist.username;
+      const message = { targetEmail: request.payload.targetEmail, playlistId };
       await this._service.sendMessage('export:songs', JSON.stringify(message));
 
       const response = h.response({
