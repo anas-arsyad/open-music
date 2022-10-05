@@ -13,6 +13,9 @@ exports.up = (pgm) => {
 
   pgm.addConstraint('collaborations', 'fk_collaborations.playlist.id', 'FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE');
   pgm.addConstraint('collaborations', 'fk_collaborations.user.id', 'FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE');
+
+  pgm.addConstraint('user_album_likes', 'fk_user_album_likes.user.id', 'FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE');
+  pgm.addConstraint('user_album_likes', 'fk_user_album_likes.albums.id', 'FOREIGN KEY(album_id) REFERENCES albums(id) ON DELETE CASCADE');
 };
 
 exports.down = (pgm) => {
@@ -23,4 +26,6 @@ exports.down = (pgm) => {
   pgm.dropConstraint('playlist_song_activities', 'fk_playlist_song_activities.playlist.id');
   pgm.dropConstraint('collaborations', 'fk_collaborations.playlist.id');
   pgm.dropConstraint('collaborations', 'fk_collaborations.user.id');
+  pgm.dropConstraint('user_album_likes', 'fk_user_album_likes.user.id');
+  pgm.dropConstraint('user_album_likes', 'fk_user_album_likes.albums.id');
 };
